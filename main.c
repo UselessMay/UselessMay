@@ -1,86 +1,170 @@
 #include <stdio.h>
 #include <stdlib.h>
-char * s_gets(char * st, int n);
-#define MAXTITL 40
-#define MAXAUTL 40
-#define MAXBKS 100 /* максимальное количество книг */
+#include <stdbool.h>
 #include <locale.h>
+#define SEATS_COUNT 12
+#define FLIGHT_1 1
+#define FLIGHT_2 2
+#define FLIGHT_3 3
+#define FLIGHT_4 4
 
-struct book {   /* установка шаблона book */;
-    char * title;
-    char * author;
-    float value;
+struct Name
+{
+    char * firstName;
+    char * lastName;
 };
 
-int getBookInfo (struct book * library, int count){
-    printf("Введите название книги.\n");
-    printf ("Нажмите [enter] в начале строки, чтобы закончить ввод.\n");
-    while (count < MAXBKS && s_gets(library[count].title, MAXTITL)!= NULL && library[count].title[0]!= '\0')
-        {
-            printf("Теперь введите ФИО автора.\n");
-            s_gets(library[count].author, MAXAUTL);
-            printf ("Теперь введите цену\n");
-            scanf("%f", &library[count++].value);
-            while (getchar()!= '\n')
-                continue; /* очистить входную строку */
-            if (count < MAXBKS)
-                printf("Введите название следующей книги.\n");
-        };
-    return count;
-}
+struct TicketDescription
+{
+    int ticketID;
+    bool isReserved;
+    struct Name * name;
+};
 
-void sortByOrder (struct book * library, int count, int index){
-    if (count > 0)
+struct Airplane {
+    int flightNumber;
+    struct TicketDescription * tickets;
+};
+
+void showEditFlightMenu (struct Airplane * airplane)
+{
+    char choiceOption='\0';
+    showMenuOptions(ptrTicket);
+    while (scanf("%c", &choiceOption)==1)
     {
-        printf("Каталог ваших книг:\n");
-        for (index = 0; index < count; index++)
-            printf("%s авторства %s: $%.2f\n", library[index].title,
-                library[index].author, library[index].value);
+        fflush(stdin);
+        switch (choiceOption)
+        {
+        case 'a':
+            showNumberOfFreeSeats (airplane[seat], SEATS_COUNT);
+            break;
+        case 'b':
+            showListOfFreeSeats (ptrTicket, SEATS_COUNT);
+            break;
+        case 'c':
+            showListOfReservedSeats (ptrTicket, SEATS_COUNT);
+            break;
+        case 'd':
+            setReservedSeat (ptrTicket);
+            break;
+        case 'e':
+            getReservedAway(ptrTicket);
+            break;
+        case 'f':
+            showMenuFlight (ptrTicket, userFlightInput, SEATS_COUNT);
+        default:
+            puts("Некорректный ввод");
+        }
+        showMenuOptions();
     }
-    else
-        printf("Вообще нет книг? Очень плохо.\n");
 }
 
-void sortByAlpha (struct book * library, int count, int index){
-
+void showNumberOfFreeSeats (struct ticketDescription * ptrTicket, int count_of_seats){
+    int count=0;
+    for (int i=0; i<count_of_seats;i++){
+        if (ptrTicket[i].reserved==false)
+            count+=1;
+    }
+    printf("Количество свободных мест=%d\n", count);
 }
 
-int main (void)
+void showListOfFreeSeats (struct ticketDescription * ptrTicket, int count_of_seats){
+    for (int i=0; i<count_of_seats;i++){
+        if (ptrTicket[i].reserved==false)
+        printf("Место №%d свободно\n", i);
+    }
+}
+
+void showListOfReservedSeats (struct ticketDescription * ptrTicket, int count_of_seats){
+    for (int i=0; i<count_of_seats;i++){
+        if (ptrTicket[i].reserved==true) {
+        printf("Место №%d забронировано\n", i);
+        printf("Фамилия - %s\n", ptrTicket[i].name->lastName);
+        printf("Имя - %s\n", ptrTicket[i].name->firstName);
+        }
+    }
+}
+
+void showMenuOptions(struct ticketDescription * ptrTicket)
+{
+    printf("Текущий номер рейса - %d\n", ptrTicket[0].flight);
+    puts ("Для выбора функции введите ее буквенную метку:");
+    puts ("a) Показать количество свободных мест");
+    puts ("b) Показать список свободных мест");
+    puts ("c) Показать список забронированных мест в алфавитном порядке");
+    puts ("d) Забронировать место для пассажира");
+    puts ("e) Снять броню с места");
+    puts ("f) Выйти из меню");
+}
+
+int selectAirplane (){
+    puts ("Выберите номер рейса и введите пункт");
+    puts ("a) 1");
+    puts ("b) 2");
+    puts ("c) 3");
+    puts ("d) 4");
+    puts ("e) Выход");
+    scanf("%c", &userFlightInput);
+    fflush(stdin);
+    switch (userFlightInput){
+    case 'a':return FLIGHT_1;
+    case 'b':return FLIGHT_2;
+    case 'c':return FLIGHT_3;
+    case 'd':return FLIGHT_4;
+    case 'e':exit (0);
+    };
+}
+
+void getReservedAway (struct ticketDescription * ptrTicket)
+{
+    int seat=0;
+    puts("С какого места снять бронь? Введите число");
+    scanf("%d", &seat);
+    ptrTicket[seat].reserved=false;
+}
+
+void setReservedSeat (struct ticketDescription * ptrTicket, char userFlightInput) {
+    puts("Введите место от 1 до 12 или q для завершения");
+    int seat=0;
+    scanf("%d", &seat);
+    ptrTicket[seat].ticketID=seat;
+    fflush(stdin);
+    ptrTicket[seat].reserved=true;
+    puts("Введите фамилию");
+    gets(ptrTicket[seat].name->lastName);
+    fflush(stdin);
+    puts("Введите имя");
+    gets(ptrTicket[seat].name->firstName);
+    puts("Подтверждаете бронь?");
+    puts("1 для подтверждения или 0 для отмены");
+    scanf("%d", &ptrTicket[seat].confirmed);
+    if (ptrTicket[seat].confirmed==0)
+      showEditFlightMenu(ptrTicket, userFlightInput);
+}
+
+int main()
 {
     setlocale (LC_ALL, "rus");
-    struct book library[MAXBKS]; /* массив структур типа book */
-    int count=0;
-    int index=0;
-    int* ptrCount=&count;
-    struct book * catalogOfBooks = calloc (MAXBKS, sizeof(struct book));
-    for (int i=0; i<MAXBKS; i++){
-        catalogOfBooks[i].title=calloc (MAXTITL, sizeof(char));
-        catalogOfBooks[i].author=calloc (MAXAUTL, sizeof(char));
-    }
-    count=getBookInfo(catalogOfBooks, count);
-    sortByOrder(catalogOfBooks, count, index);
-    for (int i=0; i<MAXBKS; i++){
-        free(catalogOfBooks[i].title);
-        free(catalogOfBooks[i].author);
+    struct Airplane * airplanes = calloc (4, sizeof(struct Airplane));
+    for (int i=0; i<4; i++){
+        airplanes[i].flightNumber=i+1;
+        airplanes[i].tickets = calloc (SEATS_COUNT, sizeof(struct TicketDescription));
+            for (int j=0; j<SEATS_COUNT;j++){
+            airplanes[i].tickets[j].name=calloc (1, sizeof(struct Name));
+            airplanes[i].tickets[j].name->firstName=calloc (20, sizeof(char));
+            airplanes[i].tickets[j].name->lastName=calloc (20, sizeof(char));
+        };
     };
-    free (catalogOfBooks);
+    int selectedAirplane = selectAirplane();
+    showEditFlightMenu(&(airplanes[selectedAirplane-1]));
+    for (int i=0; i<4; i++){
+            for (int j=0; j<SEATS_COUNT;j++){
+            free(airplanes[i].tickets[j].name->firstName);
+            free(airplanes[i].tickets[j].name->lastName);
+            free(airplanes[i].tickets[j].name);
+        };
+        free(airplanes[i].tickets);
+    };
+    free(airplanes);
     return 0;
-}
-
-
-char * s_gets(char * st, int n)
-{
-    char * ret_val;
-    char * find;
-    ret_val = fgets (st, n, stdin);
-    if (ret_val)
-    {
-        find = strchr(st, '\n'); // поиск новой строки
-        if (find) // если адрес не равен NULL,
-            *find = '\0'; // поместить туда нулевой символ
-        else
-            while (getchar()!= '\n')
-                continue; // отбросить остаток строки
-    }
-    return ret_val;
 }
